@@ -1,0 +1,1003 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>My Diary</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@300;400;500&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:        #0f0f11;
+      --surface:   #17171a;
+      --surface2:  #1e1e22;
+      --border:    #2a2a30;
+      --border2:   #35353d;
+      --text:      #e8e8ec;
+      --muted:     #72727a;
+      --accent:    #7c6fff;
+      --accent2:   #5b52e0;
+      --danger:    #e05b72;
+      --success:   #52d68a;
+      --radius:    12px;
+      --mono:      'DM Mono', monospace;
+      --sans:      'DM Sans', sans-serif;
+      --serif:     'DM Serif Display', serif;
+    }
+
+    html, body {
+      height: 100%;
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--sans);
+      font-size: 15px;
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ── Layout ── */
+    .app {
+      display: grid;
+      grid-template-columns: 280px 1fr;
+      grid-template-rows: 56px 1fr;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    /* ── Header ── */
+    header {
+      grid-column: 1 / -1;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 24px;
+      border-bottom: 1px solid var(--border);
+      background: var(--surface);
+      gap: 16px;
+    }
+    .logo {
+      font-family: var(--serif);
+      font-size: 1.25rem;
+      color: var(--text);
+      letter-spacing: -0.02em;
+      white-space: nowrap;
+    }
+    .logo span { color: var(--accent); }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex: 1;
+      justify-content: flex-end;
+    }
+
+    .config-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .config-row input {
+      background: var(--surface2);
+      border: 1px solid var(--border2);
+      border-radius: 8px;
+      color: var(--text);
+      font-family: var(--mono);
+      font-size: 0.72rem;
+      padding: 6px 10px;
+      outline: none;
+      transition: border-color 0.2s;
+      width: 190px;
+    }
+    .config-row input::placeholder { color: var(--muted); }
+    .config-row input:focus { border-color: var(--accent); }
+    .config-row input#inp-repo { width: 160px; }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-family: var(--mono);
+      font-size: 0.68rem;
+      padding: 4px 9px;
+      border-radius: 20px;
+      white-space: nowrap;
+    }
+    .badge-connected { background: rgba(82,214,138,.12); color: var(--success); border: 1px solid rgba(82,214,138,.25); }
+    .badge-disconnected { background: rgba(224,91,114,.12); color: var(--danger); border: 1px solid rgba(224,91,114,.2); }
+    .badge-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+
+    /* ── Sidebar ── */
+    .sidebar {
+      background: var(--surface);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .date-panel {
+      padding: 20px 16px 14px;
+      border-bottom: 1px solid var(--border);
+    }
+    .date-label {
+      font-size: 0.68rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 8px;
+      font-weight: 500;
+    }
+    .date-input-wrap { position: relative; }
+    .date-input-wrap input[type="date"] {
+      width: 100%;
+      background: var(--surface2);
+      border: 1px solid var(--border2);
+      border-radius: var(--radius);
+      color: var(--text);
+      font-family: var(--mono);
+      font-size: 0.85rem;
+      padding: 9px 12px;
+      outline: none;
+      cursor: pointer;
+      transition: border-color 0.2s;
+      appearance: none;
+      -webkit-appearance: none;
+    }
+    .date-input-wrap input[type="date"]::-webkit-calendar-picker-indicator {
+      filter: invert(0.5);
+      cursor: pointer;
+    }
+    .date-input-wrap input[type="date"]:focus { border-color: var(--accent); }
+
+    .entries-panel {
+      flex: 1;
+      overflow-y: auto;
+      padding: 12px 10px;
+    }
+    .entries-panel::-webkit-scrollbar { width: 4px; }
+    .entries-panel::-webkit-scrollbar-track { background: transparent; }
+    .entries-panel::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 4px; }
+
+    .entries-group { margin-bottom: 18px; }
+    .entries-group-label {
+      font-size: 0.66rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--muted);
+      padding: 0 6px 6px;
+      font-weight: 500;
+    }
+
+    .entry-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 10px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.15s;
+      border: 1px solid transparent;
+    }
+    .entry-item:hover { background: var(--surface2); }
+    .entry-item.active {
+      background: rgba(124,111,255,.12);
+      border-color: rgba(124,111,255,.25);
+    }
+    .entry-dot {
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      background: var(--accent);
+      flex-shrink: 0;
+      opacity: 0.7;
+    }
+    .entry-item.active .entry-dot { opacity: 1; }
+    .entry-date {
+      font-family: var(--mono);
+      font-size: 0.78rem;
+      color: var(--text);
+      font-weight: 500;
+    }
+    .entry-snippet {
+      font-size: 0.72rem;
+      color: var(--muted);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      flex: 1;
+    }
+
+    .sidebar-empty {
+      padding: 20px 14px;
+      font-size: 0.8rem;
+      color: var(--muted);
+      text-align: center;
+      line-height: 1.7;
+    }
+
+    /* ── Main Editor ── */
+    main {
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      background: var(--bg);
+    }
+
+    .editor-header {
+      padding: 20px 28px 16px;
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 16px;
+      border-bottom: 1px solid var(--border);
+    }
+    .editor-date-display {
+      font-family: var(--serif);
+      font-size: 1.8rem;
+      color: var(--text);
+      letter-spacing: -0.03em;
+      line-height: 1.1;
+    }
+    .editor-date-display small {
+      display: block;
+      font-family: var(--mono);
+      font-size: 0.7rem;
+      color: var(--muted);
+      letter-spacing: 0.05em;
+      font-weight: 400;
+      margin-top: 4px;
+      font-style: normal;
+    }
+
+    .editor-actions {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      flex-shrink: 0;
+      padding-top: 4px;
+    }
+
+    button {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 16px;
+      border-radius: 8px;
+      border: 1px solid transparent;
+      font-family: var(--sans);
+      font-size: 0.82rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.15s;
+      white-space: nowrap;
+      letter-spacing: 0.01em;
+    }
+    button:disabled { opacity: 0.45; cursor: not-allowed; }
+
+    .btn-save {
+      background: var(--accent);
+      color: #fff;
+    }
+    .btn-save:hover:not(:disabled) { background: var(--accent2); }
+
+    .btn-delete {
+      background: transparent;
+      border-color: var(--border2);
+      color: var(--muted);
+    }
+    .btn-delete:hover:not(:disabled) {
+      border-color: var(--danger);
+      color: var(--danger);
+      background: rgba(224,91,114,.08);
+    }
+
+    .btn-load {
+      background: transparent;
+      border-color: var(--border2);
+      color: var(--muted);
+      font-size: 0.75rem;
+    }
+    .btn-load:hover:not(:disabled) {
+      border-color: var(--accent);
+      color: var(--accent);
+      background: rgba(124,111,255,.08);
+    }
+
+    .editor-body {
+      flex: 1;
+      overflow: hidden;
+      position: relative;
+    }
+
+    textarea {
+      width: 100%;
+      height: 100%;
+      background: transparent;
+      border: none;
+      color: var(--text);
+      font-family: var(--mono);
+      font-size: 0.92rem;
+      line-height: 1.9;
+      padding: 24px 28px;
+      resize: none;
+      outline: none;
+      caret-color: var(--accent);
+    }
+    textarea::placeholder { color: rgba(114,114,122,0.5); }
+
+    /* word count */
+    .editor-footer {
+      padding: 8px 28px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-top: 1px solid var(--border);
+    }
+    .word-count {
+      font-family: var(--mono);
+      font-size: 0.68rem;
+      color: var(--muted);
+    }
+
+    /* ── Toast ── */
+    #toast {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%) translateY(60px);
+      background: var(--surface2);
+      border: 1px solid var(--border2);
+      color: var(--text);
+      font-size: 0.8rem;
+      font-family: var(--mono);
+      padding: 10px 18px;
+      border-radius: 10px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+      transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.3s;
+      opacity: 0;
+      pointer-events: none;
+      z-index: 999;
+      white-space: nowrap;
+    }
+    #toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+    #toast.success { border-color: rgba(82,214,138,.4); color: var(--success); }
+    #toast.error   { border-color: rgba(224,91,114,.4); color: var(--danger); }
+
+    /* ── Setup overlay ── */
+    #setup-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(15,15,17,0.92);
+      backdrop-filter: blur(8px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+      transition: opacity 0.3s;
+    }
+    #setup-overlay.hidden { opacity: 0; pointer-events: none; }
+
+    .setup-card {
+      background: var(--surface);
+      border: 1px solid var(--border2);
+      border-radius: 18px;
+      padding: 40px;
+      width: 480px;
+      max-width: 92vw;
+      box-shadow: 0 32px 80px rgba(0,0,0,0.6);
+    }
+    .setup-title {
+      font-family: var(--serif);
+      font-size: 1.8rem;
+      margin-bottom: 6px;
+      letter-spacing: -0.03em;
+    }
+    .setup-subtitle { color: var(--muted); font-size: 0.85rem; margin-bottom: 30px; line-height: 1.6; }
+
+    .setup-field { margin-bottom: 16px; }
+    .setup-field label {
+      display: block;
+      font-size: 0.72rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 6px;
+      font-weight: 500;
+    }
+    .setup-field input {
+      width: 100%;
+      background: var(--surface2);
+      border: 1px solid var(--border2);
+      border-radius: var(--radius);
+      color: var(--text);
+      font-family: var(--mono);
+      font-size: 0.85rem;
+      padding: 11px 14px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .setup-field input:focus { border-color: var(--accent); }
+    .setup-field input::placeholder { color: var(--muted); }
+
+    .setup-hint {
+      font-size: 0.72rem;
+      color: var(--muted);
+      margin-top: 5px;
+      line-height: 1.5;
+    }
+    .setup-hint a { color: var(--accent); text-decoration: none; }
+    .setup-hint a:hover { text-decoration: underline; }
+
+    .btn-setup-connect {
+      width: 100%;
+      padding: 12px;
+      margin-top: 24px;
+      justify-content: center;
+      background: var(--accent);
+      color: #fff;
+      font-size: 0.9rem;
+    }
+    .btn-setup-connect:hover:not(:disabled) { background: var(--accent2); }
+
+    .spinner {
+      width: 14px; height: 14px;
+      border: 2px solid rgba(255,255,255,0.3);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      display: none;
+    }
+    .loading .spinner { display: block; }
+    .loading .btn-text { display: none; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Responsive ── */
+    @media (max-width: 680px) {
+      .app {
+        grid-template-columns: 1fr;
+        grid-template-rows: 56px auto 1fr;
+      }
+      .sidebar {
+        border-right: none;
+        border-bottom: 1px solid var(--border);
+        max-height: 220px;
+      }
+      .config-row input { width: 120px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- Setup Overlay -->
+<div id="setup-overlay">
+  <div class="setup-card">
+    <div class="setup-title">My Diary ✦</div>
+    <div class="setup-subtitle">
+      Connect your GitHub repository to start saving entries privately in your own repo, organised by year and month.
+    </div>
+
+    <div class="setup-field">
+      <label>GitHub Username</label>
+      <input type="text" id="setup-owner" placeholder="e.g. johndoe" autocomplete="off" />
+    </div>
+
+    <div class="setup-field">
+      <label>Repository Name</label>
+      <input type="text" id="setup-repo" placeholder="e.g. my-diary" autocomplete="off" />
+    </div>
+
+    <div class="setup-field">
+      <label>Personal Access Token</label>
+      <input type="password" id="setup-token" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx" autocomplete="off" />
+      <div class="setup-hint">
+        Generate a token at <a href="https://github.com/settings/tokens/new" target="_blank">GitHub → Settings → Developer settings</a>.
+        Needs <strong>repo</strong> scope. Your token is stored only in your browser's localStorage — never sent anywhere except GitHub's API.
+      </div>
+    </div>
+
+    <button class="btn-save btn-setup-connect" id="btn-connect" onclick="connect()">
+      <span class="spinner"></span>
+      <span class="btn-text">Connect Repository →</span>
+    </button>
+  </div>
+</div>
+
+<!-- Main App -->
+<div class="app">
+
+  <!-- Header -->
+  <header>
+    <div class="logo">My Diary <span>✦</span></div>
+    <div class="header-right">
+      <div class="config-row">
+        <input type="text" id="inp-owner" placeholder="username" title="GitHub username" onchange="updateConfig()" />
+        <span style="color:var(--muted);font-size:0.8rem">/</span>
+        <input type="text" id="inp-repo" placeholder="repo-name" title="Repository name" onchange="updateConfig()" />
+        <button class="btn-load" onclick="loadEntries()" id="btn-refresh" title="Reload entries from GitHub">↺ Sync</button>
+      </div>
+      <div class="badge badge-disconnected" id="conn-badge">
+        <span class="badge-dot"></span>
+        <span id="conn-label">Not connected</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="date-panel">
+      <div class="date-label">Date</div>
+      <div class="date-input-wrap">
+        <input type="date" id="date-picker" onchange="onDateChange()" />
+      </div>
+    </div>
+    <div class="entries-panel" id="entries-panel">
+      <div class="sidebar-empty" id="sidebar-empty">
+        Connect your repo &amp; sync to see saved entries.
+      </div>
+    </div>
+  </aside>
+
+  <!-- Editor -->
+  <main>
+    <div class="editor-header">
+      <div>
+        <div class="editor-date-display" id="display-date">—</div>
+        <small id="display-path" style="font-family:var(--mono);font-size:0.68rem;color:var(--muted);margin-top:4px;display:block"></small>
+      </div>
+      <div class="editor-actions">
+        <button class="btn-delete" id="btn-delete" onclick="deleteEntry()" disabled>
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+          Delete
+        </button>
+        <button class="btn-save" id="btn-save" onclick="saveEntry()" disabled>
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+          Save
+        </button>
+      </div>
+    </div>
+
+    <div class="editor-body">
+      <textarea
+        id="editor"
+        placeholder="Start writing your thoughts for today…&#10;&#10;Your words are saved directly to your GitHub repository."
+        oninput="onEditorInput()"
+        spellcheck="true"
+      ></textarea>
+    </div>
+
+    <div class="editor-footer">
+      <span class="word-count" id="word-count">0 words</span>
+      <span style="font-family:var(--mono);font-size:0.68rem;color:var(--muted)" id="save-status"></span>
+    </div>
+  </main>
+
+</div>
+
+<!-- Toast -->
+<div id="toast"></div>
+
+<script>
+  /* ──────────────────────────────────────────────
+     State
+  ────────────────────────────────────────────── */
+  let cfg = { owner: '', repo: '', token: '' };
+  let connected = false;
+  let entries = {}; // { "YYYY/MM/DD": { sha, content } }
+  let currentDate = '';
+  let currentSha = null; // SHA of the file currently loaded (needed for updates/deletes)
+
+  /* ──────────────────────────────────────────────
+     Init
+  ────────────────────────────────────────────── */
+  function init() {
+    // Restore config
+    const saved = localStorage.getItem('diary_cfg');
+    if (saved) {
+      try { cfg = JSON.parse(saved); } catch(e) {}
+    }
+
+    // Set today
+    const today = todayStr();
+    document.getElementById('date-picker').value = today;
+    setDisplayDate(today);
+
+    // Populate header inputs
+    if (cfg.owner) document.getElementById('inp-owner').value = cfg.owner;
+    if (cfg.repo)  document.getElementById('inp-repo').value  = cfg.repo;
+
+    // If we have full config, skip overlay and connect
+    if (cfg.owner && cfg.repo && cfg.token) {
+      hideOverlay();
+      setConnected(true);
+      loadEntries().then(() => loadEntryForDate(today));
+    }
+  }
+
+  /* ──────────────────────────────────────────────
+     Helpers
+  ────────────────────────────────────────────── */
+  function todayStr() {
+    const d = new Date();
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
+  }
+
+  function dateToPath(dateStr) {
+    // dateStr: YYYY-MM-DD
+    const [y, m, d] = dateStr.split('-');
+    return `entries/${y}/${m}/${y}-${m}-${d}.md`;
+  }
+
+  function dateToGroupKey(dateStr) {
+    const [y, m] = dateStr.split('-');
+    const monthNames = ['January','February','March','April','May','June',
+                        'July','August','September','October','November','December'];
+    return `${monthNames[parseInt(m)-1]} ${y}`;
+  }
+
+  function formatDisplayDate(dateStr) {
+    // Returns "Monday, 17 February 2026"
+    const [y, m, d] = dateStr.split('-').map(Number);
+    const date = new Date(y, m - 1, d);
+    return date.toLocaleDateString('en-US', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+  }
+
+  function setDisplayDate(dateStr) {
+    currentDate = dateStr;
+    document.getElementById('display-date').textContent = formatDisplayDate(dateStr);
+    document.getElementById('display-path').textContent = dateToPath(dateStr);
+  }
+
+  function wordCount(text) {
+    return text.trim() === '' ? 0 : text.trim().split(/\s+/).length;
+  }
+
+  function setConnected(val) {
+    connected = val;
+    const badge = document.getElementById('conn-badge');
+    const label = document.getElementById('conn-label');
+    if (val) {
+      badge.className = 'badge badge-connected';
+      label.textContent = `${cfg.owner}/${cfg.repo}`;
+    } else {
+      badge.className = 'badge badge-disconnected';
+      label.textContent = 'Not connected';
+    }
+    document.getElementById('btn-save').disabled = !val;
+  }
+
+  function setSaveStatus(msg) {
+    document.getElementById('save-status').textContent = msg;
+  }
+
+  /* ──────────────────────────────────────────────
+     Overlay
+  ────────────────────────────────────────────── */
+  function hideOverlay() {
+    const el = document.getElementById('setup-overlay');
+    el.classList.add('hidden');
+    setTimeout(() => el.style.display = 'none', 300);
+  }
+
+  async function connect() {
+    const owner = document.getElementById('setup-owner').value.trim();
+    const repo  = document.getElementById('setup-repo').value.trim();
+    const token = document.getElementById('setup-token').value.trim();
+
+    if (!owner || !repo || !token) {
+      toast('Please fill in all fields', 'error'); return;
+    }
+
+    const btn = document.getElementById('btn-connect');
+    btn.classList.add('loading');
+    btn.disabled = true;
+
+    try {
+      // Verify token & repo access
+      const res = await ghFetch(`https://api.github.com/repos/${owner}/${repo}`, { token });
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.message || 'Could not access repository');
+      }
+      cfg = { owner, repo, token };
+      localStorage.setItem('diary_cfg', JSON.stringify(cfg));
+
+      // Update header
+      document.getElementById('inp-owner').value = owner;
+      document.getElementById('inp-repo').value  = repo;
+
+      setConnected(true);
+      hideOverlay();
+      await loadEntries();
+      const today = todayStr();
+      await loadEntryForDate(today);
+      toast('Connected successfully!', 'success');
+    } catch(e) {
+      toast(e.message, 'error');
+    } finally {
+      btn.classList.remove('loading');
+      btn.disabled = false;
+    }
+  }
+
+  /* ──────────────────────────────────────────────
+     GitHub API
+  ────────────────────────────────────────────── */
+  function ghFetch(url, { token: t, method = 'GET', body } = {}) {
+    const tk = t || cfg.token;
+    const opts = {
+      method,
+      headers: {
+        'Authorization': `Bearer ${tk}`,
+        'Accept': 'application/vnd.github+json',
+        'X-GitHub-Api-Version': '2022-11-28',
+        ...(body ? { 'Content-Type': 'application/json' } : {})
+      },
+      ...(body ? { body: JSON.stringify(body) } : {})
+    };
+    return fetch(url, opts);
+  }
+
+  async function loadEntries() {
+    if (!connected && !(cfg.owner && cfg.repo && cfg.token)) return;
+    setSaveStatus('Syncing…');
+    try {
+      // Recursively list entries/ folder
+      const res = await ghFetch(
+        `https://api.github.com/repos/${cfg.owner}/${cfg.repo}/git/trees/HEAD?recursive=1`
+      );
+      if (!res.ok) { setSaveStatus(''); return; }
+      const data = await res.json();
+      const files = (data.tree || []).filter(f =>
+        f.type === 'blob' && f.path.startsWith('entries/') && f.path.endsWith('.md')
+      );
+
+      entries = {};
+      files.forEach(f => {
+        // path: entries/YYYY/MM/YYYY-MM-DD.md
+        const match = f.path.match(/entries\/(\d{4})\/(\d{2})\/(\d{4}-\d{2}-\d{2})\.md/);
+        if (match) {
+          const dateKey = match[3]; // YYYY-MM-DD
+          entries[dateKey] = { sha: f.sha, path: f.path, content: null };
+        }
+      });
+
+      renderSidebar();
+      setSaveStatus('');
+    } catch(e) {
+      setSaveStatus('Sync failed');
+      toast('Failed to sync entries', 'error');
+    }
+  }
+
+  async function loadEntryForDate(dateStr) {
+    const editor = document.getElementById('editor');
+
+    if (!entries[dateStr]) {
+      editor.value = '';
+      currentSha = null;
+      document.getElementById('btn-delete').disabled = true;
+      onEditorInput();
+      return;
+    }
+
+    setSaveStatus('Loading…');
+    try {
+      const path = dateToPath(dateStr);
+      const res = await ghFetch(
+        `https://api.github.com/repos/${cfg.owner}/${cfg.repo}/contents/${path}`
+      );
+      if (!res.ok) throw new Error('Could not load entry');
+      const data = await res.json();
+      currentSha = data.sha;
+      const decoded = decodeURIComponent(escape(atob(data.content.replace(/\n/g, ''))));
+      editor.value = decoded;
+      document.getElementById('btn-delete').disabled = false;
+      onEditorInput();
+      setSaveStatus('Loaded');
+      setTimeout(() => setSaveStatus(''), 2000);
+    } catch(e) {
+      toast('Failed to load entry', 'error');
+      setSaveStatus('');
+    }
+  }
+
+  async function saveEntry() {
+    const content = document.getElementById('editor').value;
+    if (!connected) { toast('Not connected to GitHub', 'error'); return; }
+
+    const btn = document.getElementById('btn-save');
+    btn.disabled = true;
+    setSaveStatus('Saving…');
+
+    const path = dateToPath(currentDate);
+    const encoded = btoa(unescape(encodeURIComponent(content)));
+
+    const body = {
+      message: `diary: update ${currentDate}`,
+      content: encoded,
+      ...(currentSha ? { sha: currentSha } : {})
+    };
+
+    try {
+      const res = await ghFetch(
+        `https://api.github.com/repos/${cfg.owner}/${cfg.repo}/contents/${path}`,
+        { method: 'PUT', body }
+      );
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.message || 'Save failed');
+      }
+      const data = await res.json();
+      currentSha = data.content.sha;
+
+      // Update local index
+      entries[currentDate] = { sha: data.content.sha, path, content: null };
+      renderSidebar();
+      document.getElementById('btn-delete').disabled = false;
+      setSaveStatus('Saved ✓');
+      setTimeout(() => setSaveStatus(''), 3000);
+      toast('Entry saved!', 'success');
+    } catch(e) {
+      toast(e.message, 'error');
+      setSaveStatus('Save failed');
+    } finally {
+      btn.disabled = false;
+    }
+  }
+
+  async function deleteEntry() {
+    if (!currentSha) { toast('No saved entry to delete', 'error'); return; }
+    if (!confirm(`Delete diary entry for ${formatDisplayDate(currentDate)}?`)) return;
+
+    const path = dateToPath(currentDate);
+    const btn = document.getElementById('btn-delete');
+    btn.disabled = true;
+    setSaveStatus('Deleting…');
+
+    try {
+      const res = await ghFetch(
+        `https://api.github.com/repos/${cfg.owner}/${cfg.repo}/contents/${path}`,
+        {
+          method: 'DELETE',
+          body: { message: `diary: delete ${currentDate}`, sha: currentSha }
+        }
+      );
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.message || 'Delete failed');
+      }
+
+      delete entries[currentDate];
+      currentSha = null;
+      document.getElementById('editor').value = '';
+      renderSidebar();
+      onEditorInput();
+      setSaveStatus('');
+      toast('Entry deleted', 'success');
+    } catch(e) {
+      toast(e.message, 'error');
+      btn.disabled = false;
+      setSaveStatus('');
+    }
+  }
+
+  /* ──────────────────────────────────────────────
+     Sidebar Rendering
+  ────────────────────────────────────────────── */
+  function renderSidebar() {
+    const panel = document.getElementById('entries-panel');
+    const empty = document.getElementById('sidebar-empty');
+
+    const keys = Object.keys(entries).sort().reverse();
+    if (keys.length === 0) {
+      panel.innerHTML = '';
+      const emp = document.createElement('div');
+      emp.className = 'sidebar-empty';
+      emp.id = 'sidebar-empty';
+      emp.textContent = 'No entries yet. Write something!';
+      panel.appendChild(emp);
+      return;
+    }
+
+    // Group by "Month YYYY"
+    const groups = {};
+    keys.forEach(k => {
+      const g = dateToGroupKey(k);
+      if (!groups[g]) groups[g] = [];
+      groups[g].push(k);
+    });
+
+    panel.innerHTML = '';
+    Object.entries(groups).forEach(([label, dates]) => {
+      const group = document.createElement('div');
+      group.className = 'entries-group';
+
+      const gl = document.createElement('div');
+      gl.className = 'entries-group-label';
+      gl.textContent = label;
+      group.appendChild(gl);
+
+      dates.forEach(dateStr => {
+        const item = document.createElement('div');
+        item.className = 'entry-item' + (dateStr === currentDate ? ' active' : '');
+        item.dataset.date = dateStr;
+
+        const dot = document.createElement('span');
+        dot.className = 'entry-dot';
+
+        const dateEl = document.createElement('span');
+        dateEl.className = 'entry-date';
+        dateEl.textContent = dateStr.slice(8); // just day
+
+        const snippet = document.createElement('span');
+        snippet.className = 'entry-snippet';
+        snippet.textContent = dateStr;
+
+        item.appendChild(dot);
+        item.appendChild(dateEl);
+        item.appendChild(snippet);
+        item.addEventListener('click', () => selectDate(dateStr));
+        group.appendChild(item);
+      });
+
+      panel.appendChild(group);
+    });
+  }
+
+  function selectDate(dateStr) {
+    document.getElementById('date-picker').value = dateStr;
+    setDisplayDate(dateStr);
+    renderSidebar(); // re-render to update active state
+    loadEntryForDate(dateStr);
+  }
+
+  /* ──────────────────────────────────────────────
+     Event Handlers
+  ────────────────────────────────────────────── */
+  function onDateChange() {
+    const val = document.getElementById('date-picker').value;
+    if (!val) return;
+    setDisplayDate(val);
+    renderSidebar();
+    if (connected) loadEntryForDate(val);
+  }
+
+  function onEditorInput() {
+    const text = document.getElementById('editor').value;
+    const wc = wordCount(text);
+    document.getElementById('word-count').textContent =
+      `${wc} ${wc === 1 ? 'word' : 'words'}`;
+  }
+
+  function updateConfig() {
+    cfg.owner = document.getElementById('inp-owner').value.trim();
+    cfg.repo  = document.getElementById('inp-repo').value.trim();
+    localStorage.setItem('diary_cfg', JSON.stringify(cfg));
+  }
+
+  /* ──────────────────────────────────────────────
+     Toast
+  ────────────────────────────────────────────── */
+  let toastTimer;
+  function toast(msg, type = '') {
+    const el = document.getElementById('toast');
+    el.textContent = msg;
+    el.className = 'show' + (type ? ' ' + type : '');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => { el.className = ''; }, 3200);
+  }
+
+  /* ──────────────────────────────────────────────
+     Boot
+  ────────────────────────────────────────────── */
+  init();
+</script>
+</body>
+</html>
